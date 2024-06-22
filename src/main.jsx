@@ -59,8 +59,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="/tickets/details/:id" element={<PrivateRoute element={TicketDetailPage} />} />
               <Route path="/movie/available-shows/:id" element={<AvailabeTheatres/>} />
               <Route path="/movie/select-seat" element={<PrivateRoute element={SelectSeat} />} />
-              <Route path="/payment-success" element={<PrivateRoute element={PaymentSuccess} />} />
-              <Route path="/payment-failed" element={<PrivateRoute element={PaymentFailed} />} />
+              <Route path="/payment-success" element={<PaymentSuccess/>} />
+              <Route path="/payment-failed" element={<PaymentFailed/>} />
 
               <Route path="/admin" element={<AdminLogin />} />
               <Route path="/admin/user-list" element={<AdminPrivateRoute element={UserPage} />} />
@@ -73,7 +73,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="/theatre/login" element={<TheatreLogin />} />
               <Route path="/theatre/verify-email" element={<TheatreOtp />} />
               <Route path="/theatre/dashboard" element={ <TheatrePrivateRoute element={TheatreDashboard}/>} />
-              <Route path="/theatre/shows" element={<TheatrePrivateRoute element={TheatreShows}/>} />
+              <Route path="/theatre/shows" element={<TheatreShows/>} />
               <Route path="/theatre/screens" element={<TheatrePrivateRoute element={TheatreScreens}/>} />
               <Route path="/theatre/screens/edit-layout/:screenId" element={<TheatrePrivateRoute element={TheatreSeatLayoutEdit}/>} />
             </Routes>

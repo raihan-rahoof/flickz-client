@@ -36,7 +36,7 @@ const customStyles = {
     ...provided,
     backgroundColor: '#2c2c2c',
     color: '#fff',
-     borderRadius: '0.5rem', 
+    borderRadius: '0.5rem',
   }),
   singleValue: (provided) => ({
     ...provided,
@@ -57,38 +57,38 @@ const customStyles = {
   }),
 };
 
-
-
 function TheatreShowCards() {
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const [shows, setShows] = useState([]);
   const [movieList, setMovieList] = useState([]);
-  const [screens,setScreens]=useState([])
+  const [screens, setScreens] = useState([]);
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [selectedShow, setSelectedShow] = useState(null);
   const theatreData = JSON.parse(localStorage.getItem('theatre'));
   const theatreId = theatreData.theatre_id;
   const [formData, setFormData] = useState({
     show_name: '',
     movie: null,
     screen: '',
-    theatre:theatreId || '',
+    theatre: theatreId || '',
     date: null,
-     start_time: { hour: 0, minute: 0, second: 0, millisecond: 0 },
+    start_time: { hour: 0, minute: 0, second: 0, millisecond: 0 },
     end_time: { hour: 0, minute: 0, second: 0, millisecond: 0 },
   });
-  console.log(formData);
   const axiosInstance = createAxiosInstance('theatre');
+  
   const handleInputChange = (field, value) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
       [field]: value,
     }));
-    if(field === 'start_time' && formData.movie){
-      const duration = parseMovieDuration(formData.movie.duration)
-      const endTime = calculateEndTime(value,duration);
-      setFormData((prevData)=>({
+    if (field === 'start_time' && formData.movie) {
+      const duration = parseMovieDuration(formData.movie.duration);
+      const endTime = calculateEndTime(value, duration);
+      setFormData((prevData) => ({
         ...prevData,
-        end_time:endTime
-      }))
+        end_time: endTime,
+      }));
     }
   };
 
@@ -116,7 +116,7 @@ function TheatreShowCards() {
         movie: formData.movie.value,
         screen: formData.screen.value,
         date: formData.date,
-        theatre:formData.theatre,
+        theatre: formData.theatre,
         start_time: formatTime12Hour(formData.start_time),
         end_time: formatTime12HourInput(formData.end_time),
       };
@@ -125,6 +125,7 @@ function TheatreShowCards() {
       if (response.status === 201) {
         toast.success('New Show Added');
         onOpenChange();
+        fetchShows();
       } else {
         toast.error('Please Try again One more time');
       }
@@ -141,16 +142,28 @@ function TheatreShowCards() {
     }));
   };
 
-  const handleScreenSelect = (screenId)=>{
-    setFormData((prevFormData)=>({
+  const handleScreenSelect = (screenId) => {
+    setFormData((prevFormData) => ({
       ...prevFormData,
-      screen:screenId
-    }))
-  }
+      screen: screenId,
+    }));
+  };
 
-
-  const endTime = formatTime(formData.start_time)
-  console.log(endTime || '');
+  const handleDelete = async () => {
+    try {
+      const response = await axiosInstance.delete(`theatre/shows/${selectedShow.id}/`);
+      if (response.status === 204) {
+        toast.success('Show deleted successfully');
+        fetchShows();
+        setDeleteModal(false);
+      } else {
+        toast.error('Failed to delete show. Please try again.');
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error('Failed to delete show. Please try again.');
+    }
+  };
 
   useEffect(() => {
     fetchMovies();
@@ -161,13 +174,13 @@ function TheatreShowCards() {
   const fetchMovies = async () => {
     try {
       const response = await axiosInstance.get('theatre/view-movies');
-      const movieOptions = response.data.map(movie=>({
-        value:movie.id,
+      const movieOptions = response.data.map((movie) => ({
+        value: movie.id,
         label: movie.title,
         poster: movie.poster,
         duration: movie.duration,
-        language: movie.language
-      }))
+        language: movie.language,
+      }));
       setMovieList(movieOptions);
     } catch (error) {
       toast.error('Failed to fetch movies, please refresh the page.');
@@ -177,10 +190,10 @@ function TheatreShowCards() {
   const fetchScreens = async () => {
     try {
       const response = await axiosInstance.get('screen/add-screen/');
-      const screenOptions = response.data.map(screen =>({
+      const screenOptions = response.data.map((screen) => ({
         value: screen.id,
-        label: `${screen.name} (${screen.quality}, ${screen.sound})`
-      }))
+        label: `${screen.name} (${screen.quality}, ${screen.sound})`,
+      }));
       setScreens(screenOptions);
     } catch (error) {
       toast.error('Failed to get screens, please refresh the page.');
@@ -209,16 +222,37 @@ function TheatreShowCards() {
           {shows.length > 0 && (
             <>
               {shows.map((show) => (
-                <Card key={show.id} className='' shadow="sm" isPressable onPress={() => console.log('item pressed')}>
+                <Card key={show.id} className="" shadow="sm" isPressable>
                   <CardBody className="overflow-visible p-0">
-                    <Image shadow="sm" radius="lg" width="100%" className="w-full object-cover " src={show.movie.poster} />
+                    <Image
+                      shadow="sm"
+                      radius="lg"
+                      width="100%"
+                      className="w-full object-cover"
+                      src={show.movie.poster}
+                    />
                   </CardBody>
                   <CardFooter className="text-small flex flex-col justify-center items-start">
-                    <h2 className='text-lg font-bold'>{show.show_name}</h2>
+                    <h2 className="text-lg font-bold">{show.show_name}</h2>
                     <h3 className="font-bold font-md">{show.movie.title}</h3>
                     <p className="text-default-500">Language : {show.movie.language}</p>
                     <p className="text-default-500">Date : {formatDateString(show.date)}</p>
-                    <p className="text-default-500">{formatTime12Hour(show.start_time)} - {formatTime12Hour(show.end_time)}</p>
+                    <p className="text-default-500">
+                      {formatTime12Hour(show.start_time)} - {formatTime12Hour(show.end_time)}
+                    </p>
+                    <Button
+                      size="sm"
+                      radius="full"
+                      color="danger"
+                      variant="shadow"
+                      className="mt-2"
+                      onPress={() => {
+                        setSelectedShow(show);
+                        setDeleteModal(true);
+                      }}
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </Button>
                   </CardFooter>
                 </Card>
               ))}
@@ -252,27 +286,37 @@ function TheatreShowCards() {
                   isSearchable
                   styles={customStyles}
                 />
-                
+
                 <label className="block text-white text-sm">Screen</label>
                 <Select
                   options={screens}
                   onChange={handleScreenSelect}
                   placeholder="Select a Screen"
                   isSearchable
-                   styles={customStyles}
+                  styles={customStyles}
                 />
 
                 <div className="mb-4">
-                  <label htmlFor="release_date" className="block text-white text-sm">Show Date</label>
-                  <input type="date" id="release_date" onChange={(e) => handleInputChange('date', e.target.value)} name="date" className="w-full text-white text-sm rounded-md px-3 py-2" />
+                  <label htmlFor="release_date" className="block text-white text-sm">
+                    Show Date
+                  </label>
+                  <input
+                    type="date"
+                    id="release_date"
+                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    name="date"
+                    className="w-full text-white text-sm rounded-md px-3 py-2"
+                  />
                 </div>
 
-                
-                  <TimeInput label="Start Time" labelPlacement='outside'  onChange={(value) => handleInputChange('start_time', value)} />
-              
+                <TimeInput
+                  label="Start Time"
+                  labelPlacement="outside"
+                  onChange={(value) => handleInputChange('start_time', value)}
+                />
+
                 <label className="block text-white text-sm">End Time</label>
-                  <Input value={formatTime12HourInput(formData.end_time) || ''}  disabled />
-               
+                <Input value={formatTime12HourInput(formData.end_time) || ''} disabled />
               </ModalBody>
               <ModalFooter>
                 <Button color="danger" variant="flat" onPress={onClose}>
@@ -280,6 +324,33 @@ function TheatreShowCards() {
                 </Button>
                 <Button color="primary" onPress={handleSave}>
                   Save
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
+
+      <Modal isOpen={deleteModal} onOpenChange={setDeleteModal} placement="top-center" backdrop="blur">
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Confirm Delete</ModalHeader>
+              <ModalBody>
+                <p>Are you sure you want to delete the show "{selectedShow?.show_name}"?</p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="flat" onPress={onClose}>
+                  Cancel
+                </Button>
+                <Button
+                  color="primary"
+                  onPress={() => {
+                    handleDelete();
+                    onClose();
+                  }}
+                >
+                  Delete
                 </Button>
               </ModalFooter>
             </>

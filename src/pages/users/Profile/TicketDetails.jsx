@@ -32,7 +32,7 @@ function TicketDetails() {
   return (
     <>
       <Navbar />
-      <div className=" sm:h-full lg:h-screen md:h-screen p-5 mt-6">
+      <div className=" sm:h-full lg:h-screen md:h-full p-5 mt-6">
         <div className="gap-2 grid lg:grid-cols-4 md:grid-cols-2 sm:grid-cols-1">
           {bookings.map((item, index) => (
            
